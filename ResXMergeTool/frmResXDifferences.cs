@@ -12,23 +12,26 @@ namespace ResXMergeTool
 {
     public partial class FrmResXDifferences : Form
     {
-        String[] FilesToDiff;
+        private readonly string[] _filesToDiff;
 
-        public IDictionary<string, int> SortOrder { get; private set; }
-
-        public FrmResXDifferences(String[] filesToDiff = null)
+        public FrmResXDifferences(string[] filesToDiff)
         {
             InitializeComponent();
 
-            if (filesToDiff != null)
+            if (filesToDiff != null && filesToDiff.Length == 4)
             {
-                FilesToDiff = filesToDiff;
+                _filesToDiff = filesToDiff.Take(3).ToArray();
+
+                Text = $"Merging {filesToDiff[3]}";
                 bw.RunWorkerAsync();
             }
-            else btn_addFiles_Click(null, null);
+            else
+            {
+                throw new ArgumentException("Exactly four files must be provided.", nameof(filesToDiff));
+            }
         }
-        
 
+        public IDictionary<string, int> SortOrder { get; private set; }
 
         #region Background Worker
         private void bw_DoWork(object sender, DoWorkEventArgs e)
@@ -41,7 +44,7 @@ namespace ResXMergeTool
             try
             {
                 FileParser fileParser = new FileParser(Directory.GetCurrentDirectory());
-                fileParser.ParseResXFiles(FilesToDiff[0], FilesToDiff[1], FilesToDiff[2]);
+                fileParser.ParseResXFiles(_filesToDiff[0], _filesToDiff[1], _filesToDiff[2]);
 
                 SortOrder = fileParser.SortOrder;
 
@@ -58,6 +61,7 @@ namespace ResXMergeTool
             {
                 MessageBox.Show("One or more files failed to parse properly: " + ex.Message);
             }
+
             AddRows(rows);
 
             if (!hasConflicts)
@@ -67,56 +71,34 @@ namespace ResXMergeTool
             else
             {
                 dgv.Invoke(new SortDelegate(dgv.Sort), colSource, ListSortDirection.Ascending);
-                this.Invoke(new EnableControlsDelegate(EnableControls), true);
+                EnableControls(true);
                 dgv.Invoke((Action)(() => dgv.Cursor = Cursors.Default));
             }
         }
         private delegate void CloseDelegate();
         private delegate void SortDelegate(DataGridViewTextBoxColumn columns, ListSortDirection direction);
         private delegate void EnableControlsDelegate(bool enable);
-
-        private void bw_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            //dgv.Sort(colSource, ListSortDirection.Ascending);
-            //EnableControls(true);
-            //dgv.Cursor = Cursors.Default;
-        }
         #endregion
 
         #region Event Handlers
         #region Buttons
-        private void btnCancel_Click(object sender, EventArgs e) => Program.StartExternalMergeTool();
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            Environment.ExitCode = 1;
+            Application.Exit();
+        }
 
         private void btnRestart_Click(object sender, EventArgs e) => reInitDGV();
 
         private void btn_deleteEntry_Click(object sender, EventArgs e)
         {
             foreach (DataGridViewRow item in dgv.SelectedRows)
-                if (!item.IsNewRow)
-                    dgv.Rows.RemoveAt(item.Index);
-        }
-
-        private void btn_addFiles_Click(object sender, EventArgs e)
-        {
-            Dictionary<ResXSourceType, String> chosenFiles = new Dictionary<ResXSourceType, string>();
-            using (OpenFileDialog ofd = new OpenFileDialog())
             {
-                ofd.Multiselect = true;
-                ofd.Title = "Select all compared files";
-
-                ofd.ShowDialog();
-                foreach (String filePath in ofd.FileNames)
+                if (!item.IsNewRow)
                 {
-                    ResXSourceType sourceType = FileParser.GetResXSourceTypeFromFileName(filePath);
-                    if (chosenFiles.ContainsKey(sourceType))
-                        chosenFiles[sourceType] = filePath;
-                    else
-                        chosenFiles.Add(sourceType, filePath);
+                    dgv.Rows.RemoveAt(item.Index);
                 }
             }
-            FilesToDiff = chosenFiles.Values.ToArray();
-
-            if (FilesToDiff?.Length > 0) reInitDGV();
         }
 
         #region Save
@@ -250,7 +232,7 @@ namespace ResXMergeTool
             if (InvokeRequired)
                 Invoke(new delEnableControls(EnableControls), enable);
             else
-                dgv.Enabled = btn_addFiles.Enabled = btn_reread.Enabled = btn_saveOutput.Enabled = btn_reread.Enabled = enable;
+                dgv.Enabled = btn_reread.Enabled = btn_saveOutput.Enabled = btn_reread.Enabled = enable;
 
         }
         #endregion
@@ -269,12 +251,15 @@ namespace ResXMergeTool
 
         private void FrmResXDifferences_FormClosed(object sender, FormClosedEventArgs e)
         {
-            Save();
+            if (e.CloseReason == CloseReason.UserClosing)
+            {
+                Save();
+            }
         }
 
         private void Save()
         {
-            var savePath = Path.Combine(Directory.GetCurrentDirectory(), FilesToDiff[1]);
+            var savePath = Path.Combine(Directory.GetCurrentDirectory(), _filesToDiff[1]);
 
             try
             {

@@ -38,7 +38,6 @@
             this.pnl = new System.Windows.Forms.Panel();
             this.bw = new System.ComponentModel.BackgroundWorker();
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
-            this.btn_addFiles = new System.Windows.Forms.ToolStripMenuItem();
             this.btn_saveOutput = new System.Windows.Forms.ToolStripMenuItem();
             this.lbl_caption = new System.Windows.Forms.ToolStripLabel();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
@@ -47,7 +46,6 @@
             this.btn_startExternal = new System.Windows.Forms.ToolStripButton();
             this.btn_reread = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.dgv)).BeginInit();
-            this.pnl.SuspendLayout();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -63,9 +61,10 @@
             this.colSourceVal});
             this.dgv.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dgv.Location = new System.Drawing.Point(0, 67);
-            this.dgv.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.dgv.Margin = new System.Windows.Forms.Padding(6);
             this.dgv.Name = "dgv";
-            this.dgv.Size = new System.Drawing.Size(1924, 946);
+            this.dgv.RowHeadersWidth = 82;
+            this.dgv.Size = new System.Drawing.Size(1924, 994);
             this.dgv.TabIndex = 1;
             this.dgv.CellFormatting += new System.Windows.Forms.DataGridViewCellFormattingEventHandler(this.dgv_CellFormatting);
             this.dgv.DefaultValuesNeeded += new System.Windows.Forms.DataGridViewRowEventHandler(this.dgv_DefaultValuesNeeded);
@@ -75,27 +74,32 @@
             // colKey
             // 
             this.colKey.HeaderText = "Key";
+            this.colKey.MinimumWidth = 10;
             this.colKey.Name = "colKey";
             // 
             // colValue
             // 
             this.colValue.HeaderText = "Value";
+            this.colValue.MinimumWidth = 10;
             this.colValue.Name = "colValue";
             // 
             // colComment
             // 
             this.colComment.HeaderText = "Comment";
+            this.colComment.MinimumWidth = 10;
             this.colComment.Name = "colComment";
             // 
             // colSource
             // 
             this.colSource.HeaderText = "Source";
+            this.colSource.MinimumWidth = 10;
             this.colSource.Name = "colSource";
             this.colSource.ReadOnly = true;
             // 
             // colSourceVal
             // 
             this.colSourceVal.HeaderText = "Source Value";
+            this.colSourceVal.MinimumWidth = 10;
             this.colSourceVal.Name = "colSourceVal";
             this.colSourceVal.ReadOnly = true;
             this.colSourceVal.Visible = false;
@@ -106,24 +110,23 @@
             this.pnl.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.pnl.BackColor = System.Drawing.SystemColors.Control;
             this.pnl.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.pnl.Location = new System.Drawing.Point(0, 1013);
-            this.pnl.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.pnl.Location = new System.Drawing.Point(0, 1061);
+            this.pnl.Margin = new System.Windows.Forms.Padding(6);
             this.pnl.Name = "pnl";
-            this.pnl.Size = new System.Drawing.Size(1924, 48);
+            this.pnl.Size = new System.Drawing.Size(1924, 0);
             this.pnl.TabIndex = 2;
             // 
             // bw
             // 
             this.bw.WorkerSupportsCancellation = true;
             this.bw.DoWork += new System.ComponentModel.DoWorkEventHandler(this.bw_DoWork);
-            this.bw.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.bw_RunWorkerCompleted);
             // 
             // toolStrip1
             // 
             this.toolStrip1.AutoSize = false;
             this.toolStrip1.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
+            this.toolStrip1.ImageScalingSize = new System.Drawing.Size(32, 32);
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.btn_addFiles,
             this.btn_saveOutput,
             this.lbl_caption,
             this.toolStripSeparator2,
@@ -139,19 +142,11 @@
             this.toolStrip1.TabIndex = 3;
             this.toolStrip1.Text = "toolStrip1";
             // 
-            // btn_addFiles
-            // 
-            this.btn_addFiles.Image = global::ResXMergeTool.Properties.Resources.addfile;
-            this.btn_addFiles.Name = "btn_addFiles";
-            this.btn_addFiles.Size = new System.Drawing.Size(105, 67);
-            this.btn_addFiles.Text = "Choose files..";
-            this.btn_addFiles.Click += new System.EventHandler(this.btn_addFiles_Click);
-            // 
             // btn_saveOutput
             // 
             this.btn_saveOutput.Image = global::ResXMergeTool.Properties.Resources.savefile;
             this.btn_saveOutput.Name = "btn_saveOutput";
-            this.btn_saveOutput.Size = new System.Drawing.Size(104, 67);
+            this.btn_saveOutput.Size = new System.Drawing.Size(206, 67);
             this.btn_saveOutput.Text = "Save output..";
             this.btn_saveOutput.Click += new System.EventHandler(this.btnSave_Click);
             // 
@@ -163,7 +158,7 @@
             this.lbl_caption.LinkBehavior = System.Windows.Forms.LinkBehavior.HoverUnderline;
             this.lbl_caption.LinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(192)))));
             this.lbl_caption.Name = "lbl_caption";
-            this.lbl_caption.Size = new System.Drawing.Size(165, 64);
+            this.lbl_caption.Size = new System.Drawing.Size(337, 61);
             this.lbl_caption.Text = "Nockiro - ResXMergeTool v1.1";
             this.lbl_caption.Click += new System.EventHandler(this.lbl_caption_Click);
             // 
@@ -177,7 +172,7 @@
             this.btn_deleteEntry.Enabled = false;
             this.btn_deleteEntry.Image = global::ResXMergeTool.Properties.Resources.minus_2;
             this.btn_deleteEntry.Name = "btn_deleteEntry";
-            this.btn_deleteEntry.Size = new System.Drawing.Size(90, 64);
+            this.btn_deleteEntry.Size = new System.Drawing.Size(183, 61);
             this.btn_deleteEntry.Text = "Delete entry";
             this.btn_deleteEntry.Click += new System.EventHandler(this.btn_deleteEntry_Click);
             // 
@@ -190,8 +185,8 @@
             // 
             this.btn_startExternal.Image = global::ResXMergeTool.Properties.Resources.external;
             this.btn_startExternal.Name = "btn_startExternal";
-            this.btn_startExternal.Size = new System.Drawing.Size(120, 64);
-            this.btn_startExternal.Text = "Start external tool";
+            this.btn_startExternal.Size = new System.Drawing.Size(110, 61);
+            this.btn_startExternal.Text = "Abort";
             this.btn_startExternal.Click += new System.EventHandler(this.btnCancel_Click);
             // 
             // btn_reread
@@ -199,7 +194,7 @@
             this.btn_reread.Enabled = false;
             this.btn_reread.Image = global::ResXMergeTool.Properties.Resources.sync;
             this.btn_reread.Name = "btn_reread";
-            this.btn_reread.Size = new System.Drawing.Size(87, 64);
+            this.btn_reread.Size = new System.Drawing.Size(174, 61);
             this.btn_reread.Text = "Reread files";
             this.btn_reread.Click += new System.EventHandler(this.btnRestart_Click);
             // 
@@ -212,14 +207,12 @@
             this.Controls.Add(this.pnl);
             this.Controls.Add(this.toolStrip1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.Margin = new System.Windows.Forms.Padding(6);
             this.Name = "FrmResXDifferences";
             this.Text = "ResX Differences";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.FrmResXDifferences_FormClosed);
             ((System.ComponentModel.ISupportInitialize)(this.dgv)).EndInit();
-            this.pnl.ResumeLayout(false);
-            this.pnl.PerformLayout();
             this.toolStrip1.ResumeLayout(false);
             this.toolStrip1.PerformLayout();
             this.ResumeLayout(false);
@@ -238,7 +231,6 @@
         internal System.Windows.Forms.Panel pnl;
         internal System.ComponentModel.BackgroundWorker bw;
         private System.Windows.Forms.ToolStrip toolStrip1;
-        private System.Windows.Forms.ToolStripMenuItem btn_addFiles;
         private System.Windows.Forms.ToolStripMenuItem btn_saveOutput;
         private System.Windows.Forms.ToolStripLabel lbl_caption;
         private System.Windows.Forms.ToolStripButton btn_deleteEntry;

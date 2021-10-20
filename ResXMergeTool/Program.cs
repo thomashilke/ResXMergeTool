@@ -11,100 +11,41 @@ namespace ResXMergeTool
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main()
-        {
-            // if we're running in console mode and don't get the necessary parameters, switch immediately to an external software
-            if (Environment.GetCommandLineArgs().Length != 4)
-            {
-                Console.WriteLine("Usage: ResXMergeTool.exe File.resx.BASE[.resx] File.resx.LOCAL[.resx] File.resx.REMOTE[.resx]");
-                Console.WriteLine("Start external tool if possible..");
-                StartExternalMergeTool();
-            }
-            else
-            {
-                Console.WriteLine("Starting GUI.. Don't close this window until you're done!");
-                Application.EnableVisualStyles();
-                Application.SetCompatibleTextRenderingDefault(false);
-
-                FrmResXDifferences frmDiff;
-                // if it's no GUI, the basic checks for correct parameters were already done in Program.cs
-                if (Program.CmdLineParametersUsed)
-                    frmDiff = new FrmResXDifferences(new String[] { Environment.GetCommandLineArgs()[1], Environment.GetCommandLineArgs()[2], Environment.GetCommandLineArgs()[3] });
-                else
-                    frmDiff = new FrmResXDifferences();
-
-                Application.Run(frmDiff);
-            }
-        }
-
-        public static bool CmdLineParametersUsed
-        {
-            get
-            {
-                try { return Environment.GetCommandLineArgs().Length > 1; }
-                catch { return false; }
-            }
-        }
-
-        public static void StartExternalMergeTool()
+        public static void Main()
         {
             try
             {
-                // Check for KDIFF
-                if (File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "KDIFF3", "kdiff3.exe")))
+                if (Environment.GetCommandLineArgs().Length != 5)
                 {
-                    ProcessStartInfo pinfo = new ProcessStartInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "KDIFF3", "kdiff3.exe"), Environment.CommandLine.Substring(Application.ExecutablePath.Length + 3))
-                    {
-                        RedirectStandardOutput = true,
-                        UseShellExecute = false
-                    };
+                    // Show usage and abort.
+                    Console.WriteLine(
+                        "Usage: ResXMergeTool.exe File.resx.BASE[.resx] File.resx.LOCAL[.resx] File.resx.REMOTE[.resx] Pathname");
 
-                    Process p = new Process
-                    {
-                        StartInfo = pinfo
-                    };
-
-                    p.Start();
-                    StreamWriter s = new StreamWriter(Console.OpenStandardOutput());
-                    while (!p.StandardOutput.EndOfStream)
-                    {
-                        s.WriteLine(p.StandardOutput.ReadLine());
-                    }
-
+                    Environment.ExitCode = 1;
                 }
-                else  // check for tortoisegit merge
+                else
                 {
-                    string[] args = Environment.GetCommandLineArgs();
-                    string param;
-                    if (args.Length == 4)
-                        param = $"/mine: { args[2] }/theirs: { args[3] }/base: { args[1] } ";
-                    else
-                        param = $"/mine: { args[1] }/theirs:{ args[2] } ";
+                    Console.WriteLine("Starting GUI.. Don't close this window until you're done!");
+                    Application.EnableVisualStyles();
+                    Application.SetCompatibleTextRenderingDefault(false);
 
-                    ProcessStartInfo pinfo = new ProcessStartInfo("tortoisegitmerge.exe", param)
-                    {
-                        RedirectStandardOutput = true,
-                        UseShellExecute = false
-                    };
+                    FrmResXDifferences frmDiff =
+                        new FrmResXDifferences(
+                            new string[]
+                            {
+                                Environment.GetCommandLineArgs()[1],
+                                Environment.GetCommandLineArgs()[2],
+                                Environment.GetCommandLineArgs()[3],
+                                Environment.GetCommandLineArgs()[4]
+                            });
 
-                    Process p = new Process
-                    {
-                        StartInfo = pinfo
-                    };
-
-                    p.Start();
-                    StreamWriter s = new StreamWriter(Console.OpenStandardOutput());
-                    while (!p.StandardOutput.EndOfStream)
-                    {
-                        s.WriteLine(p.StandardOutput.ReadLine());
-                    }
+                    Application.Run(frmDiff);
                 }
             }
             catch (Exception)
             {
+                Environment.ExitCode = 1;
             }
-
-            Application.Exit();
         }
     }
 }

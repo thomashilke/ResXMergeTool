@@ -6,22 +6,21 @@ using System.Resources;
 
 namespace ResXMergeTool
 {
-
     public class FileParser
     {
-        private String WorkingPath = Directory.GetCurrentDirectory();
+        private string _workingPath = Directory.GetCurrentDirectory();
+
+        public FileParser(string path)
+        {
+            _workingPath = path;
+        }
+
         public Dictionary<string, MergedNode> NodeDictionary { get; private set; }
 
         public IDictionary<string, int> SortOrder { get; private set; }
 
-        public FileParser(string path)
-        {
-            WorkingPath = path;
-        }
-
         public static ResXSourceType GetResXSourceTypeFromFileName(string file)
         {
-
             if (file.Contains(".resx", StringComparison.OrdinalIgnoreCase))
             {
                 if (file.Contains("base", StringComparison.OrdinalIgnoreCase))
@@ -30,7 +29,7 @@ namespace ResXMergeTool
                     return ResXSourceType.LOCAL;
                 else if (file.Contains("remote", StringComparison.OrdinalIgnoreCase))
                     return ResXSourceType.REMOTE;
-                else 
+                else
                     return ResXSourceType.UNKOWN;
             }
             else return ResXSourceType.UNKOWN;
@@ -52,9 +51,9 @@ namespace ResXMergeTool
 
             NodeDictionary = nodeDict;
 
-            void processFile(string fileName, ResXSourceType rSource, Dictionary<string, MergedNode> dictionary)
+            void processFile(string fileName, ResXSourceType source, Dictionary<string, MergedNode> dictionary)
             {
-                String file = Path.Combine(WorkingPath, fileName);
+                String file = Path.Combine(_workingPath, fileName);
 
                 ResXResourceReader resx = new ResXResourceReader(file)
                 {
@@ -63,7 +62,6 @@ namespace ResXMergeTool
 
                 IDictionaryEnumerator dict = resx.GetEnumerator();
 
-            
                 while (dict.MoveNext())
                 {
                     ResXDataNode node = (ResXDataNode)dict.Value;
@@ -71,7 +69,7 @@ namespace ResXMergeTool
 
                    if (dictionary.TryGetValue(key, out var mergedNode))
                     {
-                        switch (rSource)
+                        switch (source)
                         {
                             case ResXSourceType.BASE:
                                 if (mergedNode.BaseNode is null)
@@ -96,7 +94,7 @@ namespace ResXMergeTool
                    else
                     {
                         var newNode = new MergedNode();
-                        switch (rSource)
+                        switch (source)
                         {
                             case ResXSourceType.BASE:
                                 newNode.BaseNode = node;
@@ -115,7 +113,7 @@ namespace ResXMergeTool
 
             IDictionary<string, int> getSortOrder(string fileName)
             {
-                String file = Path.Combine(WorkingPath, fileName);
+                String file = Path.Combine(_workingPath, fileName);
 
                 ResXResourceReader resx = new ResXResourceReader(file)
                 {

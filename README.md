@@ -19,7 +19,7 @@ In case of conflict, both versions are shown in the grid, and it is your respons
    ```
    [merge "ResXMergeTool"]
        name = ResX Merge Tool
-       driver = ResXMergeTool.exe %O %A %B
+       driver = ResXMergeTool.exe %O %A %B %P || git-merge-file -L local-version -L base-version -L -remote-version -q --marker-size=%L %A %O %B
        recursive = binary
    ```
 4. In the repository where you want to use this tool, set it as the merge tool for the ResX files by creating or modifying the file `.git/info/attributes`:

@@ -7,7 +7,9 @@ namespace ResXMergeTool
 {
     public class MergedNode
     {
-        public string Key => (BaseNode ?? LocalNode ?? RemoteNode)?.Name ?? throw new InvalidOperationException("At least one node must be defined.");
+        public string Key =>
+            (BaseNode ?? LocalNode ?? RemoteNode)?.Name ??
+            throw new InvalidOperationException("At least one node must be defined.");
 
         public ResXDataNode BaseNode { get; set; }
 
@@ -58,7 +60,9 @@ namespace ResXMergeTool
             }
             else
             {
-                return BaseValue.Equals((string)node.GetValue((ITypeResolutionService)null)) ? NodeDelta.Unchanged : NodeDelta.Modified;
+                return BaseValue.Equals((string)node.GetValue((ITypeResolutionService)null))
+                    ? NodeDelta.Unchanged
+                    : NodeDelta.Modified;
             }
         }
 
@@ -160,7 +164,15 @@ namespace ResXMergeTool
                             break;
 
                         case NodeDelta.Unchanged:
-                            yield return (Key, LocalNode is not null ? LocalValue : RemoteValue, LocalNode is not null ? LocalComment : RemoteComment, "UNCH BOTH", ResXSourceType.ALL);
+                            yield return (Key,
+                                LocalNode is not null
+                                    ? LocalValue
+                                    : RemoteValue,
+                                LocalNode is not null
+                                    ? LocalComment
+                                    : RemoteComment,
+                                "UNCH BOTH",
+                                ResXSourceType.ALL);
                             break;
                     }
                     break;
