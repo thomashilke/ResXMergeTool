@@ -13,11 +13,10 @@ namespace ResXMergeTool
         [STAThread]
         static void Main()
         {
-
             // if we're running in console mode and don't get the necessary parameters, switch immediately to an external software
-            if (CmdLineParametersUsed && (Environment.GetCommandLineArgs().Length != 6 || !Environment.GetCommandLineArgs()[5].ToLower().EndsWith(".resx")))
+            if (Environment.GetCommandLineArgs().Length != 4)
             {
-                Console.WriteLine("Usage: ResXMergeTool.exe File.resx.BASE[.resx] File.resx.LOCAL[.resx] File.resx.REMOTE[.resx] -o File.resx");
+                Console.WriteLine("Usage: ResXMergeTool.exe File.resx.BASE[.resx] File.resx.LOCAL[.resx] File.resx.REMOTE[.resx]");
                 Console.WriteLine("Start external tool if possible..");
                 StartExternalMergeTool();
             }
@@ -106,7 +105,6 @@ namespace ResXMergeTool
             }
 
             Application.Exit();
-
         }
     }
 }

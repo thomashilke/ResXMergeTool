@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "ResXMergeTool": {
+      "commandName": "Project"
+    },
+    "With real files": {
+      "commandName": "Project",
+      "commandLineArgs": ".merge_file_a26480 .merge_file_b26480 .merge_file_c26480"
+    }
+  }
+}

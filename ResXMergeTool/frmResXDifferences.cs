@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -15,11 +14,11 @@ namespace ResXMergeTool
     {
         String[] FilesToDiff;
 
+        public IDictionary<string, int> SortOrder { get; private set; }
+
         public FrmResXDifferences(String[] filesToDiff = null)
         {
             InitializeComponent();
-
-            chkAutoRemoveBaseOnly.Checked = Properties.Settings.Default.AutoRemoveBaseOnly;
 
             if (filesToDiff != null)
             {
@@ -28,10 +27,13 @@ namespace ResXMergeTool
             }
             else btn_addFiles_Click(null, null);
         }
+        
+
 
         #region Background Worker
         private void bw_DoWork(object sender, DoWorkEventArgs e)
         {
+            bool hasConflicts = false;
             List<DataGridViewRow> rows = new List<DataGridViewRow>();
 
             EnableControls(false);
@@ -39,16 +41,17 @@ namespace ResXMergeTool
             try
             {
                 FileParser fileParser = new FileParser(Directory.GetCurrentDirectory());
-                fileParser.ParseResXFiles(FilesToDiff);
+                fileParser.ParseResXFiles(FilesToDiff[0], FilesToDiff[1], FilesToDiff[2]);
 
-                foreach (ResXSourceNode n in fileParser.OriginNodes.Values)
-                    rows.Add(AddRow(n.Node.Name, n.Node.GetValue((ITypeResolutionService)null), n.Node.Comment, ResXSourceNode.GetStringFromEnum(n.Source), n.Source));
+                SortOrder = fileParser.SortOrder;
 
-                foreach (ResXConflictNode n in fileParser.NodeConflicts.Values)
+                foreach (var mergedNode in fileParser.NodeDictionary.Values)
                 {
-                    if (n.BaseNode != null) rows.Add(AddRow(n.BaseNode.Name, n.BaseNode.GetValue((ITypeResolutionService)null), n.BaseNode.Comment, "XCONFLICT - BASE", ResXSourceType.CONFLICT));
-                    if (n.LocalNode != null) rows.Add(AddRow(n.LocalNode.Name, n.LocalNode.GetValue((ITypeResolutionService)null), n.LocalNode.Comment, "XCONFLICT - LOCAL", ResXSourceType.CONFLICT));
-                    if (n.RemoteNode != null) rows.Add(AddRow(n.RemoteNode.Name, n.RemoteNode.GetValue((ITypeResolutionService)null), n.RemoteNode.Comment, "XCONFLICT - REMOTE", ResXSourceType.CONFLICT));
+                    foreach (var r in mergedNode.GetRows())
+                    {
+                        rows.Add(AddRow(r.Item1, r.Item2, r.Item3, r.Item4, r.Item5));
+                    }
+                    hasConflicts |= mergedNode.IsInConflict();
                 }
             }
             catch (Exception ex)
@@ -56,13 +59,27 @@ namespace ResXMergeTool
                 MessageBox.Show("One or more files failed to parse properly: " + ex.Message);
             }
             AddRows(rows);
+
+            if (!hasConflicts)
+            {
+                this.Invoke(new CloseDelegate(Close));
+            }
+            else
+            {
+                dgv.Invoke(new SortDelegate(dgv.Sort), colSource, ListSortDirection.Ascending);
+                this.Invoke(new EnableControlsDelegate(EnableControls), true);
+                dgv.Invoke((Action)(() => dgv.Cursor = Cursors.Default));
+            }
         }
+        private delegate void CloseDelegate();
+        private delegate void SortDelegate(DataGridViewTextBoxColumn columns, ListSortDirection direction);
+        private delegate void EnableControlsDelegate(bool enable);
 
         private void bw_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            dgv.Sort(colSource, ListSortDirection.Ascending);
-            EnableControls(true);
-            dgv.Cursor = Cursors.Default;
+            //dgv.Sort(colSource, ListSortDirection.Ascending);
+            //EnableControls(true);
+            //dgv.Cursor = Cursors.Default;
         }
         #endregion
 
@@ -106,53 +123,9 @@ namespace ResXMergeTool
         private void btnSave_Click(object sender, EventArgs e)
         {
             EnableControls(false);
-            using (SaveFileDialog sfd = new SaveFileDialog())
-            {
-                if (FilesToDiff?.Length > 0)
-                    sfd.InitialDirectory = Path.GetDirectoryName(FilesToDiff[0]);
 
-                sfd.Filter = "Resource files|*.resx|All files|*.*";
-                sfd.ShowDialog();
+            Save();
 
-                if (sfd.FileName != "")
-                {
-                    String savePath = sfd.FileName;
-                    dgv.Cursor = Cursors.WaitCursor;
-
-                    try
-                    {
-                        if (dgv.IsCurrentCellDirty | dgv.IsCurrentRowDirty)
-                            dgv.EndEdit();
-
-                        dgv.Sort(colKey, ListSortDirection.Ascending);
-
-                        ResXResourceWriter resX = new ResXResourceWriter(Path.Combine(Directory.GetCurrentDirectory(), savePath));
-
-                        for (int i = 0; i <= dgv.RowCount - 1; i++)
-                        {
-                            if (dgv.Rows[i].IsNewRow)
-                                continue;
-                            if (chkAutoRemoveBaseOnly.Checked && ((ResXSourceType)dgv.Rows[i].Cells[colSourceVal.Index].Value) == ResXSourceType.BASE)
-                                continue;
-
-                            ResXDataNode n = new ResXDataNode(Convert.ToString(dgv[colKey.Index, i].Value), dgv[colValue.Index, i].Value)
-                            {
-                                Comment = Convert.ToString(dgv[colComment.Index, i].Value)
-                            };
-                            resX.AddResource(n);
-                        }
-                        resX.Generate();
-                        resX.Close();
-
-                        Properties.Settings.Default.AutoRemoveBaseOnly = chkAutoRemoveBaseOnly.Checked;
-                        Properties.Settings.Default.Save();
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"The ResX file '{savePath}' failed to save properly: " + ex.Message);
-                    }
-                }
-            }
             EnableControls(true);
         }
         #endregion
@@ -163,29 +136,29 @@ namespace ResXMergeTool
         #region Data Grid View
         private void dgv_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {
-            switch (Convert.ToString(dgv[colSource.Index, e.RowIndex].Value))
-            {
-                case "ALL":
-                case "BOTH":
-                    e.CellStyle.BackColor = Color.Aquamarine;
-                    break;
-                case "BASE":
-                    e.CellStyle.BackColor = Color.MistyRose;
-                    break;
-                case "LOCAL":
-                case "LOCAL ONLY":
-                    e.CellStyle.BackColor = Color.LightGreen;
-                    break;
-                case "REMOTE":
-                case "REMOTE ONLY":
-                    e.CellStyle.BackColor = Color.LightSkyBlue;
-                    break;
-                default:
-                    e.CellStyle.BackColor = Color.Firebrick;
-                    e.CellStyle.ForeColor = Color.White;
-                    break;
-            }
+            e.CellStyle.ForeColor = Color.White;
 
+            var source = Convert.ToString(dgv[colSource.Index, e.RowIndex].Value);
+            if (source.StartsWith("DEL"))
+            {
+                e.CellStyle.BackColor = Color.Firebrick;
+            }
+            else if (source.StartsWith("MOD"))
+            {
+                e.CellStyle.BackColor = Color.DarkOrange;
+            }
+            else if (source.StartsWith("ADD"))
+            {
+                e.CellStyle.BackColor = Color.LightGreen;
+            }
+            else if (source.StartsWith("UNCH BOTH"))
+            {
+                e.CellStyle.BackColor = Color.LightSkyBlue;
+            }
+            else
+            {
+                e.CellStyle.BackColor = Color.Black;
+            }
         }
 
         private void dgv_DefaultValuesNeeded(object sender, DataGridViewRowEventArgs e)
@@ -289,10 +262,59 @@ namespace ResXMergeTool
             dgv.Rows.Clear();
             bw.RunWorkerAsync();
         }
-        #endregion
 
         #endregion
 
+        #endregion
 
+        private void FrmResXDifferences_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            Save();
+        }
+
+        private void Save()
+        {
+            var savePath = Path.Combine(Directory.GetCurrentDirectory(), FilesToDiff[1]);
+
+            try
+            {
+                if (dgv.IsCurrentCellDirty || dgv.IsCurrentRowDirty)
+                {
+                    dgv.EndEdit();
+                }
+
+                var nodes = new List<ResXDataNode>();
+
+                ResXResourceWriter resX = new ResXResourceWriter(savePath);
+
+                for (int i = 0; i <= dgv.RowCount - 1; i++)
+                {
+                    if (dgv.Rows[i].IsNewRow)
+                        continue;
+
+                    ResXDataNode node = new ResXDataNode(Convert.ToString(dgv[colKey.Index, i].Value), dgv[colValue.Index, i].Value)
+                    {
+                        Comment = Convert.ToString(dgv[colComment.Index, i].Value)
+                    };
+
+                    nodes.Add(node);
+                }
+
+                nodes.Sort(new NodeComparer(SortOrder));
+
+                foreach (var node in nodes)
+                {
+                    resX.AddResource(node);
+                }
+                resX.Generate();
+                resX.Close();
+
+                Properties.Settings.Default.Save();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"The ResX file '{savePath}' failed to save properly: " + ex.Message);
+            }
+        }
     }
 }
