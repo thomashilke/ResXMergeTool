@@ -8,7 +8,9 @@ It compares typical merge conflicted .NET Resource (.resx) files through BASE, L
  - the same key was added by both copies with different values,
  - the same key was modified by both copies.
 
-In case of conflict, both versions are shown in the grid, and it is your responsibility to resolve the conflict by deleting the version you don't want to keep.
+In case of conflict, both versions are shown in the grid, and it is your responsibility to resolve the conflict by deleting the version you don't want to keep. Here is what it looks like:
+
+![Screenshot of the UI](./img/resxmergetool.png)
 
 ### Integration with Git
 1. Build the solution with the Release configuration,
