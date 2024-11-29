@@ -55,6 +55,12 @@ namespace ResXMergeTool
             {
                 String file = Path.Combine(_workingPath, fileName);
 
+                // If no merge-base exists, we will given an empty file by git.
+                if (new FileInfo(file).Length == 0)
+                {
+                    return;
+                }
+
                 ResXResourceReader resx = new ResXResourceReader(file)
                 {
                     UseResXDataNodes = true
